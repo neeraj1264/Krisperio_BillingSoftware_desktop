@@ -76,8 +76,8 @@ function buildMobileInvoiceHtml(order = {}) {
         <div>
           <img class="logo" src="/logo.png" alt="Logo" width="150" onerror="this.style.display='none'" />
         </div>
-        <h1>Foodies Hub</h1>
-        <p style="text-align:center; margin-top:0; font-size:15px; padding:0 2px;">Pehowa, haryana, 136128<br/>70158-23645 70155-16336</p>
+        <h1>Krisperio</h1>
+        <p style="text-align:center; margin-top:0; font-size:15px; padding:0 2px;">Pehowa Cheeka Road, Morthali<br/>98124-13900</p>
         <hr />
         <h2>Invoice Details</h2>
 
@@ -105,23 +105,26 @@ function buildMobileInvoiceHtml(order = {}) {
           </tbody>
         </table>
 
-        ${delivery !== 0 ? `
-          <div class="total">
-            <p style="margin:1rem 0 0 0">Item Total </p>
-            <p style="margin:0">₹${itemTotal.toFixed(2)}</p>
-          </div>
-          <div class="total">
-            <p style="margin:0">Service Charge:</p>
-            <p style="margin:0">+${delivery.toFixed(2)}</p>
-          </div>
-        ` : ""}
+${(delivery !== 0 || discount > 0 || pendingAmount > 0) ? `
+  <div class="total">
+    <p style="margin:1rem 0 0 0">Item Total </p>
+    <p style="margin:0">₹${itemTotal.toFixed(2)}</p>
+  </div>
+` : ""}
 
-        ${(discount > 0) ? `
-          <div class="total">
-            <p style="margin:0">Discount:(${discountPercentage}%)</p>
-            <p style="margin:0">–${discount.toFixed(2)}</p>
-          </div>
-        ` : ""}
+${delivery !== 0 ? `
+  <div class="total">
+    <p style="margin:0">Service Charge:</p>
+    <p style="margin:0">+${delivery.toFixed(2)}</p>
+  </div>
+` : ""}
+
+${discount > 0 ? `
+  <div class="total">
+    <p style="margin:0">Discount:(${discountPercentage}%)</p>
+    <p style="margin:0">–${discount.toFixed(2)}</p>
+  </div>
+` : ""}
 
         <p class="totalAmount">Net Total: ₹${netTotal.toFixed(2)}</p>
           ${(pendingAmount > 0) ? `

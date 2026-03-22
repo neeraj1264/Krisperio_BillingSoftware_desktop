@@ -54,7 +54,7 @@ const OrderReport = () => {
     if (filterType === "weekly") {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const filteredOrdersList = orders.filter(
-        (order) => new Date(order.timestamp) >= startOfMonth
+        (order) => new Date(order.timestamp) >= startOfMonth,
       );
 
       const weeksInMonth = [0, 0, 0, 0, 0];
@@ -83,8 +83,7 @@ const OrderReport = () => {
         const monthKey = `${orderDate.getFullYear()}-${orderDate.getMonth() + 1}`;
         ordersByMonth[monthKey] =
           (ordersByMonth[monthKey] || 0) + order.totalAmount;
-        orderCountByMonth[monthKey] =
-          (orderCountByMonth[monthKey] || 0) + 1;
+        orderCountByMonth[monthKey] = (orderCountByMonth[monthKey] || 0) + 1;
 
         if (!dataMap[monthKey]) dataMap[monthKey] = [];
         dataMap[monthKey].push(order);
@@ -101,10 +100,8 @@ const OrderReport = () => {
       orders.forEach((order) => {
         const orderDate = new Date(order.timestamp);
         const year = orderDate.getFullYear();
-        ordersByYear[year] =
-          (ordersByYear[year] || 0) + order.totalAmount;
-        orderCountByYear[year] =
-          (orderCountByYear[year] || 0) + 1;
+        ordersByYear[year] = (ordersByYear[year] || 0) + order.totalAmount;
+        orderCountByYear[year] = (orderCountByYear[year] || 0) + 1;
 
         if (!dataMap[year]) dataMap[year] = [];
         dataMap[year].push(order);
@@ -232,7 +229,7 @@ const OrderReport = () => {
   // Calculate total revenue for the selected period
   const totalRevenue = filteredOrders.reduce(
     (acc, order) => acc + order.totalAmount,
-    0
+    0,
   );
 
   // Toggle expanded order row to show/hide product details
@@ -242,16 +239,59 @@ const OrderReport = () => {
 
   // Format the date string for display
   const formatDate = (timestamp) =>
-    new Date(timestamp).toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    }).replace(/\//g, "-");
+    new Date(timestamp)
+      .toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      })
+      .replace(/\//g, "-");
 
+  // Full item summary for selected period
+  const getItemSalesSummary = () => {
+    const summary = {};
+
+    filteredOrders.forEach((order) => {
+      order.products?.forEach((product) => {
+        const key = product.size
+          ? `${product.name} (${product.size})`
+          : product.name;
+
+        if (!summary[key]) {
+          summary[key] = {
+            quantity: 0,
+            revenue: 0,
+          };
+        }
+
+        summary[key].quantity += product.quantity || 1;
+        summary[key].revenue += (product.price || 0) * (product.quantity || 1);
+      });
+    });
+
+    return Object.entries(summary).sort(
+      (a, b) => b[1].quantity - a[1].quantity,
+    );
+  };
+
+  // Best seller card data
+  const getTopSellingItem = () => {
+    const summary = getItemSalesSummary();
+
+    if (!summary.length) return null;
+
+    return {
+      name: summary[0][0],
+      quantity: summary[0][1].quantity,
+      revenue: summary[0][1].revenue,
+    };
+  };
+
+  const topItem = getTopSellingItem();
   return (
     <>
       <Header />
@@ -293,6 +333,24 @@ const OrderReport = () => {
                 <h2 className="data-show">
                   Total Revenue: <strong>Rs.{totalRevenue.toFixed(2)}</strong>
                 </h2>
+
+                {topItem && (
+                  <div className="best-seller-card">
+                    <div className="trophy">🏆</div>
+
+                    <div>
+                      <div className="best-title">
+                        Best Seller ({selectedPeriod})
+                      </div>
+
+                      <div className="best-item">{topItem.name}</div>
+
+                      <div className="best-stats">
+                        Sold: {topItem.quantity} | Revenue: ₹{topItem.revenue}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -300,6 +358,34 @@ const OrderReport = () => {
               <p>No orders available for the selected period.</p>
             ) : (
               <>
+                {/* Pie Chart & Top 5 Selling Products Table */}
+                <h2 style={{ marginTop: "2rem" }}>
+                  Top 5 Selling Products (Pie Chart & Table)
+                </h2>
+                <canvas ref={pieChartRef} width={"50%"} height={"50%"} />
+                <div className="item-sales-summary">
+                  <div className="summary-header">
+                    <h3>Item Sales Summary ({selectedPeriod})</h3>
+
+                    <span className="summary-count">
+                      {getItemSalesSummary().length} items
+                    </span>
+                  </div>
+
+                  <div className="summary-list">
+                    {getItemSalesSummary().map(([name, data], index) => (
+                      <div key={name} className="summary-row">
+                        <span className="rank">#{index + 1}</span>
+
+                        <span className="item-name">{name}</span>
+
+                        <span className="item-qty">{data.quantity} sold -</span>
+
+                        <span className="item-qty">- ₹{data.revenue}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 {/* Orders Table with expandable rows */}
                 <table
                   border="1"
@@ -373,12 +459,6 @@ const OrderReport = () => {
                     ))}
                   </tbody>
                 </table>
-
-                {/* Pie Chart & Top 5 Selling Products Table */}
-                <h2 style={{ marginTop: "2rem" }}>
-                  Top 5 Selling Products (Pie Chart & Table)
-                </h2>
-                <canvas ref={pieChartRef} width={"50%"} height={"50%"} />
               </>
             )}
           </>

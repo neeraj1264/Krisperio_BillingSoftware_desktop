@@ -1,84 +1,55 @@
 // src/constants/categoryHierarchy.js
 export const CATEGORY_HIERARCHY = {
-  Chinese: [
-    "Vegetable",
-    "Noodles",
-    "Paneer",
-    "Sizzlers",
-    "Mushroom",
-    "Main",
-    "Combo meal",
-    "Maggie",
-    "Chaap",
-    "Momos",
-    "Rice",
-    "Soup",
-  ],
   Pizza: [
-    "Double Veg. Pizza",
-    "Simple Veg. Pizza",
-    "Special Veg. Pizza",
-    "Premium Veg. Pizza",
-    "Flood Pizza",
-    "Kulhad Pizza",
-    "Extra",
-    "Choice of Crust",
+    "Single Topping Pizza",
+    "Double Topping Pizza",
+    "Veg 1",
+    "Veg 2",
+    "Veg 3",
+    "Veg 4",
+    "Combo",
+    "Extra Topping",
+    "Extra Cheese",
+    "Cheese Burst",
+    "Dip"
   ],
   Burger: [
     "Burger",
   ],
   Wrap: [
-    "Wrap"
+    "Wrap & kathi roll"
   ],
-  ZPARCEL: [
-    "Zingy Parcel"
+  "Spring roll": [
+    "Spring roll"
   ],
-  Taco: [
-    "Taco"
+  Momos: [
+    "Momos"
   ],
-  Meal: [
-    "Meal"
+  Mocktail: [
+    "Mocktail"
   ],
-  GarlicBread: [
-    "Garlic Bread",
-    "Garlic Bread (3 Pc)"
+  Bread: [
+    "Bread"
   ],
   Sandwich: [
     "Sandwich"
   ],
-  Calzones: [
-    "Calzones"
-  ],
   Pasta: [
     "Pasta"
   ],
-  Salad: [
-    "Salad"
-  ],
   Fries: [
-    "Fries In Jar (Veg.)"
-  ],
-  Snacks: [
-    "Snacks (Veg.)"
+    "Fries & side"
   ],
   Coffee: [
     "Coffee",
-    "Cold Coffee"
   ],
   Shakes: [
     "Shakes"
   ],
-  Coolers: [
-    "Coolers",
-    "Premium Coolers"
-  ],
-  SBrownie: [
-    "Sizzling Brownie"
-  ],
-  DBeverages: [
-    "Drink"
-  ],
   Chocolawa: [
     "Chocolawa"
+  ],
+  Maggi: [
+    "Maggi & Salad"
   ]
 };

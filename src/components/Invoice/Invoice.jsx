@@ -37,26 +37,19 @@ import PrintButton from "../Utils/PrintButton";
 import { formatOrderMessage, openWhatsApp } from "../Utils/whatsapp";
 
 const BOGO_ELIGIBLE_PRODUCTS = {
-  "Italian sweet": ["med", "large"],
-  "Heat 'n' sweet": ["med", "large"],
-  "Hot stuff": ["med", "large"],
-  "Garlic to hot": ["med", "large"],
-  "Four season": ["med", "large"],
-  "Super spicy": ["med", "large"],
-  "Love in box (heart shape)": ["med", "large"],
-  "Cheese pizza": ["med", "large"],
-  "Chicago's spl. paneer": ["med", "large"],
-  "Peri peri boom": ["med", "large"],
-  "Mughlai retreat": ["med", "large"],
-  "Karahi paneer pizza": ["med", "large"],
-  "Makhni supreme": ["med", "large"],
-  "7 veggies": ["med", "large"],
-  "Mexicana overload": ["med", "large"],
-  "Tandoori paneer": ["med", "large"],
-  "Cheese pasta pizza": ["med", "large"],
-  "Spicy pasta pizza": ["med", "large"],
-  "Chicago's flood": ["med", "large"],
-  "Bursty cheese pizza": ["med"],
+  "Farm fresh pizza": ["medium", "large"],
+  "Tandoori paneer pizza ": ["medium", "large"],
+  "Paneer makhni pizza ": ["medium", "large"],
+  "Delight pizza": ["medium", "large"],
+  "Achaari pizza": ["medium", "large"],
+  "Chilly paneer pizza ": ["medium", "large"],
+  "Veg hawain pizza": ["medium", "large"],
+  "Veg mexicana pizza": ["medium", "large"],
+  "Veggie paradise pizza": ["medium", "large"],
+  "Veg delux pizza": ["medium", "large"],
+  "Tandoori chaap pizza": ["medium", "large"],
+  "Kadai chaap pizza": ["medium", "large"],
+  "Mix veg pizza": ["medium", "large"],
 };
 const Invoice = () => {
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -144,12 +137,12 @@ const Invoice = () => {
   // Effect to check day of week and automatically enable BOGO on Thursdays
   useEffect(() => {
     const checkDay = () => {
-      const today = new Date().getDay(); // Sunday = 0, Monday = 1, ..., Thursday = 4
-      const thursday = 4;
-      setIsThursday(today === thursday);
+      const today = new Date().getDay(); 
+      const isOfferDay = today === 0 || today === 3;
+      setIsThursday(isOfferDay);
 
       // Automatically enable BOGO on Thursdays
-      if (today === thursday) {
+      if (isOfferDay) {
         setBogoEnabled(true);
       } else {
         setBogoEnabled(false);
@@ -1142,29 +1135,39 @@ display: none !important;
   };
 
   const TOP_CATEGORIES = [
-    "pizza",
-    "Double Veg. Pizza",
-    "Flood Pizza",
-    "Simple Veg. Pizza",
-    "Premium Veg. Pizza",
-    "Extra",
-    "Choice of Crust",
-    "Special Veg. Pizza",
-    "Kulhad Pizza",
-    "chinese",
-    "Vegetable",
-    "Noodles",
-    "Paneer",
-    "Sizzlers",
-    "Mushroom",
-    "Main",
-    "Combo meal",
-    "Maggie",
-    "Chaap",
+    "Pizza",
+    "Single Topping Pizza",
+    "Double Topping Pizza",
+    "Veg 1",
+    "Veg 2",
+    "Veg 3",
+    "Veg 4",
+    "Combo",
+    "Extra Topping",
+    "Extra Cheese",
+    "Cheese Burst",
+    "Dip",
+    "Burger",
+    "Sandwich",
+    "Pasta",
+    "Bread",
+    "Spring roll",
     "Momos",
-    "Rice",
-    "Soup",
+    "Shakes",
+    "Coffee",
+    "Mocktail",
+    "Chocolawa",
   ];
+
+  // Size rule mapping
+const getFreePizzaSize = (paidSize) => {
+  const size = paidSize?.toLowerCase();
+
+  if (size === "large") return "medium";
+  if (size === "medium") return "medium";
+
+  return null;
+};
 
   const sortByTopCategories = (list) => {
     return list.sort((a, b) => {
@@ -2057,10 +2060,12 @@ const instructionsPart = order.instructions
               const eligibleSizes =
                 BOGO_ELIGIBLE_PRODUCTS[bogoPaidProduct.name] || [];
 
+                 // Get correct free size based on rule
+        const freeSize = getFreePizzaSize(bogoPaidProduct.size);
               // Get all free options that match the paid pizza's size
               const freeOptions = Object.entries(BOGO_ELIGIBLE_PRODUCTS)
                 .filter(([pizzaName, sizes]) =>
-                  sizes.includes(bogoPaidProduct.size?.toLowerCase() || "")
+                  sizes.includes(freeSize)
                 )
                 .map(([pizzaName]) => pizzaName);
 
@@ -2082,7 +2087,7 @@ const instructionsPart = order.instructions
                             ...prev,
                             {
                               ...freeProd,
-                              size: bogoPaidProduct.size, // Use same size as paid pizza
+                              size: getFreePizzaSize(bogoPaidProduct.size), // Use same size as paid pizza
                               price: 0,
                               isFree: true,
                               quantity: 1,
@@ -2096,7 +2101,7 @@ const instructionsPart = order.instructions
                           setBogoPaidProduct(null);
                         }}
                       >
-                        {name} ({bogoPaidProduct.size})
+                        {name} ({freeSize})
                       </button>
                     </li>
                   ))}

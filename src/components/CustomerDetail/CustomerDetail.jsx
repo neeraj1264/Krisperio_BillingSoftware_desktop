@@ -618,7 +618,7 @@ const CustomerDetail = () => {
           <h1
             style={{ textAlign: "center", margin: ".5rem", fontSize: "25px" }}
           >
-            Foodies Hub
+            Krisperio
           </h1>
           <p
             style={{
@@ -628,9 +628,9 @@ const CustomerDetail = () => {
               padding: "0 2px",
             }}
           >
-            Pehowa, Haryana, 136128
+            Pehowa Cheeka Road, Morthali
             <br />
-            70158-23645 70155-16336
+            98124-13900
           </p>
           <hr />
           <h2 style={{ textAlign: "center", margin: 0, fontSize: "20px" }}>
