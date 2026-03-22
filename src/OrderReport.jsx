@@ -412,7 +412,7 @@ const OrderReport = () => {
                           <td style={{ fontSize: "1rem" }}>
                             {formatDate(order.timestamp)}
                           </td>
-                          <td>{order.customerName || "Unknown"}</td>
+                          <td>{order.name || "Unknown"}</td>
                           <td>Rs.{order.totalAmount.toFixed(2)}</td>
                         </tr>
                         {expandedOrderId === order._id && (
