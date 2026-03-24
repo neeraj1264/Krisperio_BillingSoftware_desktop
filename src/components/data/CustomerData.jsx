@@ -99,6 +99,15 @@ export const CustomerData = () => {
     navigate(-1);
   };
 
+    useEffect(() => {
+      const isAdvancedEnabled =
+        localStorage.getItem("advancedFeature") === "true";
+  
+      if (!isAdvancedEnabled) {
+        navigate("/invoice");
+      }
+    }, []);
+    
   return (
     <>
       <Header headerName="Customer Data" setSearch={setSearch} />

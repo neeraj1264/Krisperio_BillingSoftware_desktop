@@ -77,7 +77,7 @@ function buildMobileInvoiceHtml(order = {}) {
           <img class="logo" src="/logo.png" alt="Logo" width="150" onerror="this.style.display='none'" />
         </div>
         <h1>Krisperio</h1>
-        <p style="text-align:center; margin-top:0; font-size:15px; padding:0 2px;">Pehowa Cheeka Road, Morthali<br/>98124-13900</p>
+        <p style="text-align:center; margin-top:0; font-size:15px; padding:0 2px;">Ambala Hisar Road, Malakpur<br/>74049-60488</p>
         <hr />
         <h2>Invoice Details</h2>
 

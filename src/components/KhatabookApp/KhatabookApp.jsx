@@ -9,6 +9,7 @@ import "./KhatabookApp.css";
 import Header from "../header/Header";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useNavigate } from "react-router-dom";
 
 export default function KhataBook() {
   const [customers, setCustomers] = useState([]);
@@ -18,6 +19,7 @@ export default function KhataBook() {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [activeTransaction, setActiveTransaction] = useState(null);
   const [expandedCustomer, setExpandedCustomer] = useState(null);
+  const navigate = useNavigate();
 
   // 🔍 Search
   const [showSearch, setShowSearch] = useState(false);
@@ -270,6 +272,16 @@ export default function KhataBook() {
       setLoadingTransaction(false);
     }
   };
+
+    useEffect(() => {
+      const isAdvancedEnabled =
+        localStorage.getItem("advancedFeature") === "true";
+  
+      if (!isAdvancedEnabled) {
+        navigate("/invoice");
+      }
+    }, []);
+    
   return (
     <>
       {loading && (

@@ -179,7 +179,7 @@ const Invoice = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const EXPIRY_MS = 12 * 60 * 60 * 1000;
+  const EXPIRY_MS = 2 * 60 * 60 * 1000;
 
   useEffect(() => {
     const cleanUp = (bills, setBills, storageKey) => {

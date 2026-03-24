@@ -2,8 +2,10 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import Chart from "chart.js/auto";
 import { fetchOrders } from "./api";
 import Header from "./components/header/Header";
+import { useNavigate } from "react-router-dom";
 
 const OrderReport = () => {
+  const navigate = useNavigate();
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
   const pieChartRef = useRef(null); // Reference for the Pie Chart canvas
@@ -292,6 +294,16 @@ const OrderReport = () => {
   };
 
   const topItem = getTopSellingItem();
+
+    useEffect(() => {
+      const isAdvancedEnabled =
+        localStorage.getItem("advancedFeature") === "true";
+  
+      if (!isAdvancedEnabled) {
+        navigate("/invoice");
+      }
+    }, []);
+
   return (
     <>
       <Header />

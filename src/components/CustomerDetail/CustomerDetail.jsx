@@ -628,9 +628,9 @@ const CustomerDetail = () => {
               padding: "0 2px",
             }}
           >
-            Pehowa Cheeka Road, Morthali
+            Ambala Hisar Road, Malakpur
             <br />
-            98124-13900
+            74049-60488
           </p>
           <hr />
           <h2 style={{ textAlign: "center", margin: 0, fontSize: "20px" }}>
