@@ -82,7 +82,7 @@ const Advance = ({ orders, setOrders }) => {
         </div>
 
         {/* Normal Features Checkbox */}
-        <div className="checkbox-container">
+      {/*  <div className="checkbox-container">
           <label>
             <input
               type="checkbox"
@@ -92,7 +92,7 @@ const Advance = ({ orders, setOrders }) => {
             />
             <h4>Employee</h4>
           </label>
-        </div>
+        </div> */}
 
         {/* Password Popup */}
         {showPasswordPopup && (
