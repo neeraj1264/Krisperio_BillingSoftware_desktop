@@ -340,15 +340,15 @@ const NewProduct = ({ setSelectedProducts }) => {
 
         {isWithVariety && (
           <div className="varieties-container">
-            {/* <input
+             <input
               type="text"
               placeholder="Size"
               value={productVariety.size}
               onChange={(e) =>
                 setProductVariety((prev) => ({ ...prev, size: e.target.value }))
               }
-            /> */}
-            <select
+            /> 
+          {/*  <select
   value={productVariety.size}
   onChange={(e) =>
     setProductVariety((prev) => ({ ...prev, size: e.target.value }))
@@ -360,7 +360,7 @@ const NewProduct = ({ setSelectedProducts }) => {
   <option value="Large">Large</option>
   <option value="Extra Large">Extra Large</option>
 
-</select>
+</select> */}
             <input
               type="number"
               placeholder="Price (₹)"
