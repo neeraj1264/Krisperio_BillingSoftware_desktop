@@ -30,7 +30,9 @@ function buildMobileInvoiceHtml(order = {}) {
   const rows = products
     .map((product, index) => {
       const qty = product.quantity || 1;
-      const name = product.size ? `${product.name} (${product.size})` : product.name;
+      const name = product.size
+        ? `${product.name} (${product.size})`
+        : product.name;
       const price = Number(product.price || 0);
       const total = price * qty;
       return `
@@ -44,10 +46,14 @@ function buildMobileInvoiceHtml(order = {}) {
     })
     .join("\n");
 
-  const itemTotal = products.reduce((sum, p) => sum + (Number(p.price || 0) * (p.quantity || 1)), 0);
+  const itemTotal = products.reduce(
+    (sum, p) => sum + Number(p.price || 0) * (p.quantity || 1),
+    0,
+  );
   const delivery = Number(order.delivery || 0) || 0;
-  const discount = Number(order.discount || 0) || 0; // assume absolute amount
-  const discountPercentage = Number(order.discountPercentage || "") || "";
+  const discount = Number(order.discount || 0) || 0;
+  const discountPercentage = Number(order.discountPercentage || 0);
+  const manualDiscount = Number(order.manualDiscount || 0);
   const pendingAmount = Number(order.pendingAmount || 0) || 0;
   const netTotal = itemTotal + delivery - discount;
 
@@ -105,31 +111,55 @@ function buildMobileInvoiceHtml(order = {}) {
           </tbody>
         </table>
 
-${(delivery !== 0 || discount > 0 || pendingAmount > 0) ? `
+${
+  delivery !== 0 || discount > 0 || pendingAmount > 0
+    ? `
   <div class="total">
     <p style="margin:1rem 0 0 0">Item Total </p>
     <p style="margin:0">₹${itemTotal.toFixed(2)}</p>
   </div>
-` : ""}
+`
+    : ""
+}
 
-${delivery !== 0 ? `
+${
+  delivery !== 0
+    ? `
   <div class="total">
     <p style="margin:0">Service Charge:</p>
     <p style="margin:0">+${delivery.toFixed(2)}</p>
   </div>
-` : ""}
+`
+    : ""
+}
 
-${discount > 0 ? `
+${
+  discount > 0
+    ? `
   <div class="total">
-    <p style="margin:0">Discount:(${discountPercentage}%)</p>
+    <p style="margin:0">
+Discount: ${
+        manualDiscount > 0
+          ? ` `
+          : discountPercentage > 0
+            ? `(${discountPercentage}%)`
+            : ""
+      }
+</p>
     <p style="margin:0">–${discount.toFixed(2)}</p>
   </div>
-` : ""}
+`
+    : ""
+}
 
         <p class="totalAmount">Net Total: ₹${netTotal.toFixed(2)}</p>
-          ${(pendingAmount > 0) ? `
+          ${
+            pendingAmount > 0
+              ? `
         <p style="text-align: center">pending Amount: ${pendingAmount}</p>
-        `: ""}
+        `
+              : ""
+          }
         <hr />
         <div style="text-align:center; font-size:15px; padding:.1rem 0 1rem;">Thank You Visit Again!</div>
       </div>
@@ -154,7 +184,13 @@ function printHtml(html) {
   };
 }
 
-export default function PrintButton({ order = null, elementId = null, getHtml = null, label = "Print", className = "" }) {
+export default function PrintButton({
+  order = null,
+  elementId = null,
+  getHtml = null,
+  label = "Print",
+  className = "",
+}) {
   const handleClick = async () => {
     try {
       // 1) elementId: use existing DOM content (keeps your mobileinvoice markup exactly)

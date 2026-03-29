@@ -505,7 +505,7 @@ const CustomerDetail = () => {
           className="suggestions"
           style={{
             background: "#fff",
-            border: "2px solid black",
+            border: "2px solid red",
             zIndex: 10,
             listStyle: "none",
             padding: 0,

@@ -75,6 +75,7 @@ const Invoice = () => {
   const [upiAmount, setUpiAmount] = useState("");
   const [delivery, setdelivery] = useState("");
   const [discount, setDiscount] = useState("");
+  const [discountAmountManual, setDiscountAmountManual] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("unpaid");
   const invoiceRef = useRef();
   const [instructions, setInstructions] = useState("");
@@ -100,13 +101,13 @@ const Invoice = () => {
 
   // two separate lists in localStorage
   const [deliveryBills, setDeliveryBills] = useState(
-    () => JSON.parse(localStorage.getItem("deliveryKotData")) || []
+    () => JSON.parse(localStorage.getItem("deliveryKotData")) || [],
   );
   const [dineInBills, setDineInBills] = useState(
-    () => JSON.parse(localStorage.getItem("dineInKotData")) || []
+    () => JSON.parse(localStorage.getItem("dineInKotData")) || [],
   );
   const [takeawayBills, setTakeawayBills] = useState(
-    () => JSON.parse(localStorage.getItem("takeawayKotData")) || []
+    () => JSON.parse(localStorage.getItem("takeawayKotData")) || [],
   );
   // tracks which list to show in the modal
   const [modalType, setModalType] = useState("delivery"); // "delivery" or "dine-in"
@@ -137,7 +138,7 @@ const Invoice = () => {
   // Effect to check day of week and automatically enable BOGO on Thursdays
   useEffect(() => {
     const checkDay = () => {
-      const today = new Date().getDay(); 
+      const today = new Date().getDay();
       const isOfferDay = today === 0 || today === 3;
       setIsThursday(isOfferDay);
 
@@ -202,7 +203,7 @@ const Invoice = () => {
     const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
     const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(
       2,
-      "0"
+      "0",
     );
     const seconds = String(totalSeconds % 60).padStart(2, "0");
     return `${hours}:${minutes}:${seconds}`;
@@ -215,7 +216,7 @@ const Invoice = () => {
 
   const filteredProducts = selectedProducts
     .filter((product) =>
-      product.name.toLowerCase().includes(Search.toLowerCase())
+      product.name.toLowerCase().includes(Search.toLowerCase()),
     )
     .reduce((acc, product) => {
       const category = product.category || "Others";
@@ -236,7 +237,7 @@ const Invoice = () => {
   // memoize sorted category list for consistency
   const categories = useMemo(
     () => Object.keys(filteredProducts).sort((a, b) => a.localeCompare(b)),
-    [filteredProducts]
+    [filteredProducts],
   );
 
   // initialize activeCategory when filteredProducts first load
@@ -326,7 +327,7 @@ const Invoice = () => {
     const syncCart = async () => {
       await saveItems(
         "cart",
-        productsToSend.map((p, idx) => ({ ...p, id: idx }))
+        productsToSend.map((p, idx) => ({ ...p, id: idx })),
       );
     };
     if (productsToSend.length) syncCart();
@@ -338,10 +339,10 @@ const Invoice = () => {
       setShowPopup(true);
 
       const savedSelectedVarieties = JSON.parse(
-        localStorage.getItem("selectedVariety") || "[]"
+        localStorage.getItem("selectedVariety") || "[]",
       );
       setSelectedVariety(
-        savedSelectedVarieties.filter((v) => v.productId === product.id)
+        savedSelectedVarieties.filter((v) => v.productId === product.id),
       ); // Filter by productId
     } else {
       handleAddToWhatsApp(product); // Directly add product if no varieties
@@ -390,52 +391,53 @@ const Invoice = () => {
     };
   }, []);
 
- const handleCustomerPhoneChange = async(e) => {
+  const handleCustomerPhoneChange = async (e) => {
     const phoneValue = e.target.value;
     // allow only digits, max 10
     if (/^\d*$/.test(phoneValue) && phoneValue.length <= 10) {
       setCustomerInfo((prev) => ({ ...prev, phone: phoneValue }));
-        setAutoFilledPending(false);
-  setPendingAmount("");
+      setAutoFilledPending(false);
+      setPendingAmount("");
       // immediately hide suggestions when we reach 10 digits
-        const digitsOnly = (phoneValue || "").replace(/\D/g, "");
+      const digitsOnly = (phoneValue || "").replace(/\D/g, "");
       if (phoneValue.length === 10) {
-           try {
+        try {
+          const list = await fetchcustomerdata();
+          const found = list.find(
+            (c) => String(c.phone).replace(/\D/g, "") === digitsOnly,
+          );
 
-      const list = await fetchcustomerdata();
-      const found = list.find(
-        (c) => String(c.phone).replace(/\D/g, "") === digitsOnly
-      );
+          if (found) {
+            const pending =
+              found.youwillget != null
+                ? Number(found.youwillget)
+                : Number(found.youwillget || 0) -
+                  Number(found.youwillgave || 0);
 
-      if (found) {
-        const pending = found.youwillget != null
-          ? Number(found.youwillget)
-          : (Number(found.youwillget || 0) - Number(found.youwillgave || 0));
-
-           if (pending > 0) {
-        setPendingAmount(String(pending));
-        setAutoFilledPending(true);
-         } else {
-          // don't auto-fill zero/negative
-          setPendingAmount("");
+            if (pending > 0) {
+              setPendingAmount(String(pending));
+              setAutoFilledPending(true);
+            } else {
+              // don't auto-fill zero/negative
+              setPendingAmount("");
+              setAutoFilledPending(false);
+            }
+            // also fill name/address if available
+            setCustomerInfo((prev) => ({
+              ...prev,
+              name: prev.name || found.name || "",
+              address: prev.address || found.address || "",
+            }));
+          } else {
+            // not found: keep pending empty
+            setPendingAmount("");
+            setAutoFilledPending(false);
+          }
+        } catch (err) {
+          console.error("Failed to lookup customer by phone:", err);
+          setPendingAmount("0");
           setAutoFilledPending(false);
         }
-        // also fill name/address if available
-        setCustomerInfo((prev) => ({
-          ...prev,
-          name: prev.name || found.name || "",
-          address: prev.address || found.address || "",
-        }));
-      } else {
-        // not found: keep pending empty 
-        setPendingAmount("");
-        setAutoFilledPending(false);
-      }
-    } catch (err) {
-      console.error("Failed to lookup customer by phone:", err);
-      setPendingAmount("0");
-      setAutoFilledPending(false);
-    }
         setPhoneSuggestions([]);
         // blur to collapse mobile suggestion/keyboard UI if needed
         if (phoneInputRef.current) phoneInputRef.current.blur();
@@ -477,29 +479,60 @@ const Invoice = () => {
     }
   }, [cashAmount, paymentMethod, productsToSend]);
 
+  useEffect(() => {
+    if (paymentMethod === "partial") {
+      const subtotal = calculateTotalPrice(productsToSend);
+      const del = parseFloat(delivery) || 0;
+
+      const percentageDiscount = ((parseFloat(discount) || 0) * subtotal) / 100;
+
+      const manualDiscount = parseFloat(discountAmountManual) || 0;
+
+      const finalDiscount =
+        manualDiscount > 0 ? manualDiscount : percentageDiscount;
+
+      const total = Math.max(0, subtotal + del - finalDiscount);
+
+      const cash = parseFloat(cashAmount) || 0;
+      const remaining = Math.max(0, total - cash);
+
+      setUpiAmount(remaining.toFixed(2));
+    } else {
+      setCashAmount("");
+      setUpiAmount("");
+    }
+  }, [
+    cashAmount,
+    paymentMethod,
+    productsToSend,
+    delivery,
+    discount,
+    discountAmountManual,
+  ]);
+
   const handleSuggestionClick = (cust) => {
     setCustomerInfo({
       name: cust.name || "",
       phone: String(cust.phone || ""),
       address: cust.address || "",
     });
-      // compute pending either from totalOwed or lifetimeSale - receivedAmount
-  const pending = cust.youwillget != null
-    ? (Number(cust.youwillget || 0) - Number(cust.youwillgave || 0))
-    : 0;
-  if (pending > 0) {
-    setPendingAmount(String(pending));
-    setAutoFilledPending(true);
-  } else {
-    setPendingAmount("");
-    setAutoFilledPending(false);
-  }
+    // compute pending either from totalOwed or lifetimeSale - receivedAmount
+    const pending =
+      cust.youwillget != null
+        ? Number(cust.youwillget || 0) - Number(cust.youwillgave || 0)
+        : 0;
+    if (pending > 0) {
+      setPendingAmount(String(pending));
+      setAutoFilledPending(true);
+    } else {
+      setPendingAmount("");
+      setAutoFilledPending(false);
+    }
     setPhoneSuggestions([]);
     if (phoneInputRef.current) {
       phoneInputRef.current.blur();
     }
   };
-
 
   // handlers for delivery and discount (numeric-only)
   const handleDeliveryChange = (e) => {
@@ -529,12 +562,12 @@ const Invoice = () => {
         selected.price === variety.price &&
         selected.productId === productId
           ? { ...selected, quantity: (selected.quantity || 0) + delta }
-          : selected
+          : selected,
       );
 
       // Remove variety if the quantity becomes less than 1
       updatedVarieties = updatedVarieties.filter(
-        (selected) => selected.quantity > 0
+        (selected) => selected.quantity > 0,
       );
 
       // Save updated selectedVariety to localStorage
@@ -561,7 +594,7 @@ const Invoice = () => {
               selected.size === variety.size &&
               selected.price === variety.price &&
               selected.productId === productId
-            ) // Match by productId too
+            ), // Match by productId too
         );
       }
 
@@ -592,7 +625,7 @@ const Invoice = () => {
         (prod) =>
           prod.name === product.name &&
           prod.price === product.price &&
-          prod.size === product.size
+          prod.size === product.size,
       );
       // a) BOGO check — do this _before_ any state updater
       console.log({ bogoEnabled, today: new Date().getDay() });
@@ -607,7 +640,7 @@ const Invoice = () => {
             prod.price === product.price &&
             prod.size === product.size
               ? { ...prod, quantity: prod.quantity + 1 }
-              : prod
+              : prod,
           );
         }
 
@@ -618,7 +651,7 @@ const Invoice = () => {
             // Check if free item already exists
             const freeExists = updated.some(
               (p) =>
-                p.name === product.name && p.size === product.size && p.isFree
+                p.name === product.name && p.size === product.size && p.isFree,
             );
 
             // Add free item if it doesn't exist
@@ -658,7 +691,7 @@ const Invoice = () => {
           (p) =>
             p.name === newProd.name &&
             p.price === newProd.price &&
-            p.size === newProd.size
+            p.size === newProd.size,
         );
         if (!exists) updated.push(newProd);
         else
@@ -667,7 +700,7 @@ const Invoice = () => {
             p.price === newProd.price &&
             p.size === newProd.size
               ? { ...p, quantity: newProd.quantity }
-              : p
+              : p,
           );
       });
       // NEW: Apply BOGO logic for variety products
@@ -705,7 +738,7 @@ const Invoice = () => {
     setProductsToSend(updatedProductsToSend);
     localStorage.setItem(
       "productsToSend",
-      JSON.stringify(updatedProductsToSend)
+      JSON.stringify(updatedProductsToSend),
     );
   };
 
@@ -717,10 +750,10 @@ const Invoice = () => {
 
       // Remove product from the selectedProducts and productsToSend arrays
       const updatedSelectedProducts = selectedProducts.filter(
-        (prod) => !(prod.name === productName && prod.price === productPrice)
+        (prod) => !(prod.name === productName && prod.price === productPrice),
       );
       const updatedProductsToSend = productsToSend.filter(
-        (prod) => !(prod.name === productName && prod.price === productPrice)
+        (prod) => !(prod.name === productName && prod.price === productPrice),
       );
 
       // Update the state
@@ -731,7 +764,7 @@ const Invoice = () => {
       localStorage.setItem("products", JSON.stringify(updatedSelectedProducts));
       localStorage.setItem(
         "productsToSend",
-        JSON.stringify(updatedProductsToSend)
+        JSON.stringify(updatedProductsToSend),
       );
 
       console.log("Product removed successfully from both MongoDB and state");
@@ -744,7 +777,7 @@ const Invoice = () => {
   const calculateTotalPrice = (products = []) => {
     return products.reduce(
       (total, product) => total + product.price * product.quantity,
-      0
+      0,
     );
   };
 
@@ -807,7 +840,14 @@ const Invoice = () => {
     const subtotal = calculateTotalPrice(productsToSend);
     const del = parseFloat(delivery) || 0;
     const discPercentage = parseFloat(discount) || 0;
-    const discountAmount = (subtotal * discPercentage) / 100;
+
+    const percentageDiscount = (subtotal * discPercentage) / 100;
+
+    const manualDiscount = parseFloat(discountAmountManual) || 0;
+
+    const discountAmount =
+      manualDiscount > 0 ? manualDiscount : percentageDiscount;
+
     const total = Math.max(0, subtotal + del - discountAmount);
 
     // Validate partial amounts
@@ -842,7 +882,7 @@ const Invoice = () => {
         nextNo = counter.date === todayKey ? counter.lastNo + 1 : 51;
         localStorage.setItem(
           "kotCounter",
-          JSON.stringify({ date: todayKey, lastNo: nextNo })
+          JSON.stringify({ date: todayKey, lastNo: nextNo }),
         );
         orderNumberToUse = getNextOrderNumber();
       }
@@ -853,7 +893,8 @@ const Invoice = () => {
 
       const billNo = String(nextNo).padStart(4, "0");
       const orderId = `order_${Date.now()}`;
-      const pendingNum = Number((pendingAmount || "0").replace(/[^\d.-]/g, "")) || 0;
+      const pendingNum =
+        Number((pendingAmount || "0").replace(/[^\d.-]/g, "")) || 0;
 
       const orderData = {
         id: orderId,
@@ -862,6 +903,7 @@ const Invoice = () => {
         orderType,
         delivery: del,
         discountPercentage: discPercentage,
+        manualDiscount: manualDiscount,
         pendingAmount: pendingNum,
         discount: discountAmount,
         products: productsToSend,
@@ -876,14 +918,14 @@ const Invoice = () => {
           paymentMethod === "cash"
             ? total
             : paymentMethod === "partial"
-            ? parseFloat(cashAmount) || 0
-            : 0,
+              ? parseFloat(cashAmount) || 0
+              : 0,
         upiAmount:
           paymentMethod === "upi"
             ? total
             : paymentMethod === "partial"
-            ? parseFloat(upiAmount) || 0
-            : 0,
+              ? parseFloat(upiAmount) || 0
+              : 0,
       };
       const customerData = {
         id: orderId,
@@ -933,6 +975,7 @@ const Invoice = () => {
         pendingAmount: pendingNum,
         discountPercentage: discPercentage,
         discountAmount: discountAmount,
+        manualDiscount: manualDiscount,
         paymentMethod,
         paymentStatus,
         instructions: instructions,
@@ -962,6 +1005,7 @@ const Invoice = () => {
       setUpiAmount("");
       setdelivery("");
       setDiscount("");
+      setDiscountAmountManual("");
       setInstructions("");
       setShowCustomerModal(false);
       setPhoneSuggestions([]);
@@ -977,18 +1021,16 @@ Bill No. ${billNo}
 </div>
 `;
 
-const instructionsPart = instructions
-  ? `<div class="instructions"><strong>Instructions:</strong> ${instructions}</div>`
-  : "";
+      const instructionsPart = instructions
+        ? `<div class="instructions"><strong>Instructions:</strong> ${instructions}</div>`
+        : "";
 
-
-const printContent =
-  header +
-  (customerInfo.name ? `<div>Name: ${customerInfo.name}</div>` : "") +
-  (customerInfo.phone ? `<div>Phone: ${customerInfo.phone}</div>` : "") +
-  printArea.innerHTML +
-  instructionsPart;
-
+      const printContent =
+        header +
+        (customerInfo.name ? `<div>Name: ${customerInfo.name}</div>` : "") +
+        (customerInfo.phone ? `<div>Phone: ${customerInfo.phone}</div>` : "") +
+        printArea.innerHTML +
+        instructionsPart;
 
       const win = window.open("", "", "width=600,height=400");
       const style = `<style>
@@ -1018,7 +1060,7 @@ display: none !important;
       <body>
       ${printContent}
       </body>
-      </html>`
+      </html>`,
       );
       win.document.close();
       win.focus();
@@ -1160,22 +1202,22 @@ display: none !important;
   ];
 
   // Size rule mapping
-const getFreePizzaSize = (paidSize) => {
-  const size = paidSize?.toLowerCase();
+  const getFreePizzaSize = (paidSize) => {
+    const size = paidSize?.toLowerCase();
 
-  if (size === "large") return "medium";
-  if (size === "medium") return "medium";
+    if (size === "large") return "medium";
+    if (size === "medium") return "medium";
 
-  return null;
-};
+    return null;
+  };
 
   const sortByTopCategories = (list) => {
     return list.sort((a, b) => {
       const ai = TOP_CATEGORIES.findIndex(
-        (cat) => cat.toLowerCase() === a.toLowerCase()
+        (cat) => cat.toLowerCase() === a.toLowerCase(),
       );
       const bi = TOP_CATEGORIES.findIndex(
-        (cat) => cat.toLowerCase() === b.toLowerCase()
+        (cat) => cat.toLowerCase() === b.toLowerCase(),
       );
 
       if (ai !== -1 && bi !== -1) return ai - bi;
@@ -1194,10 +1236,9 @@ const getFreePizzaSize = (paidSize) => {
     try {
       const items = order.items || order.products || [];
 
-const instructionsPart = order.instructions
-  ? `<div class="instructions"><strong>Instructions:</strong> ${order.instructions}</div>`
-  : "";
-
+      const instructionsPart = order.instructions
+        ? `<div class="instructions"><strong>Instructions:</strong> ${order.instructions}</div>`
+        : "";
 
       const header = `
        <div style="text-align:center; font-weight:700; margin-bottom:8px;">
@@ -1227,15 +1268,15 @@ const instructionsPart = order.instructions
             `
             <div class="product-item" style="display:flex; justify-content:space-between; margin-bottom:6px;">
                <div style="width:60%; text-align:left;">${it.name}${
-              it.size ? ` (${it.size})` : ""
-            }</div>
+                 it.size ? ` (${it.size})` : ""
+               }</div>
                <div style="width:20%; text-align:center;">${
                  it.quantity || 1
                }</div>
                <div style="width:20%; text-align:center;">${
                  it.price * it.quantity
                }</div>
-            </div>`
+            </div>`,
         )
         .join("");
 
@@ -1262,7 +1303,7 @@ const instructionsPart = order.instructions
         return;
       }
       win.document.write(
-        `<html><head><title>KOT Ticket</title>${style}</head><body>${printContent}</body></html>`
+        `<html><head><title>KOT Ticket</title>${style}</head><body>${printContent}</body></html>`,
       );
       win.document.close();
       win.focus();
@@ -1278,7 +1319,7 @@ const instructionsPart = order.instructions
   const updatePaymentStatus = (orderIndex, newStatus) => {
     const updateBills = (bills, setBills, storageKey) => {
       const updatedBills = bills.map((order, idx) =>
-        idx === orderIndex ? { ...order, paymentStatus: newStatus } : order
+        idx === orderIndex ? { ...order, paymentStatus: newStatus } : order,
       );
       setBills(updatedBills);
       localStorage.setItem(storageKey, JSON.stringify(updatedBills));
@@ -1309,7 +1350,7 @@ const instructionsPart = order.instructions
               <div className="category-bar">
                 {Object.keys(CATEGORY_HIERARCHY)
                   .sort((a, b) =>
-                    sortByTopCategories([a, b])[0] === a ? -1 : 1
+                    sortByTopCategories([a, b])[0] === a ? -1 : 1,
                   )
                   .map((parent) => {
                     const allSubs = CATEGORY_HIERARCHY[parent];
@@ -1317,7 +1358,7 @@ const instructionsPart = order.instructions
                     const subs = allSubs
                       .filter((sub) => filteredProducts[sub])
                       .sort((a, b) =>
-                        sortByTopCategories([a, b])[0] === a ? -1 : 1
+                        sortByTopCategories([a, b])[0] === a ? -1 : 1,
                       );
 
                     if (!subs.length) return null;
@@ -1412,8 +1453,8 @@ const instructionsPart = order.instructions
                           p.name === product.name &&
                           (!product.varieties?.length ||
                             product.varieties.some(
-                              (v) => v.price === p.price && v.size === p.size
-                            ))
+                              (v) => v.price === p.price && v.size === p.size,
+                            )),
                       );
 
                       return (
@@ -1441,8 +1482,8 @@ const instructionsPart = order.instructions
                               {product.price
                                 ? product.price // Use product price if it exists
                                 : product.varieties.length > 0
-                                ? product.varieties[0].price // Fallback to first variety price
-                                : "N/A"}{" "}
+                                  ? product.varieties[0].price // Fallback to first variety price
+                                  : "N/A"}{" "}
                               {/* Handle case when neither price nor varieties are available */}
                             </p>
                           </div>
@@ -1588,7 +1629,7 @@ const instructionsPart = order.instructions
                               handleQuantityChange(
                                 product.name,
                                 product.price,
-                                -1
+                                -1,
                               )
                             }
                             // disabled={product.quantity <= 1}
@@ -1602,7 +1643,7 @@ const instructionsPart = order.instructions
                               handleQuantityChange(
                                 product.name,
                                 product.price,
-                                1
+                                1,
                               )
                             }
                           >
@@ -1667,8 +1708,8 @@ const instructionsPart = order.instructions
                     {orderType === "delivery"
                       ? "Delivery"
                       : orderType === "dine-in"
-                      ? "Dine‑In"
-                      : "Takeaway"}
+                        ? "Dine‑In"
+                        : "Takeaway"}
                   </div>
                 </ul>
                 <div className="order-type">
@@ -1686,8 +1727,8 @@ const instructionsPart = order.instructions
                           {type === "delivery"
                             ? "Delivery"
                             : type === "dine-in"
-                            ? "Dine‑In"
-                            : "Takeaway"}
+                              ? "Dine‑In"
+                              : "Takeaway"}
                         </em>
                       </span>
                     </label>
@@ -1738,8 +1779,8 @@ const instructionsPart = order.instructions
               {modalType === "delivery"
                 ? "Delivery"
                 : modalType === "dine-in"
-                ? "Dine-In"
-                : "Takeaway"}{" "}
+                  ? "Dine-In"
+                  : "Takeaway"}{" "}
               Bills
             </h3>
             {getCurrentBills().length === 0 && <p>No bills found.</p>}
@@ -1755,21 +1796,21 @@ const instructionsPart = order.instructions
               {(modalType === "delivery"
                 ? deliveryBills
                 : modalType === "dine-in"
-                ? dineInBills
-                : takeawayBills
+                  ? dineInBills
+                  : takeawayBills
               ).map((order, idx) => {
                 const remaining = EXPIRY_MS - (now - order.timestamp);
 
                 const delivery = order.delivery ?? 0;
                 // Use the new fields from the order object
-                const discountPercentage =
-                  order.discountPercentage ?? order.discount ?? 0;
+                const discountPercentage = order.discountPercentage ?? 0;
+                const manualDiscount = order.manualDiscount ?? 0;
                 const discountAmount =
                   order.discountAmount ??
                   (order.discount
                     ? (order.items.reduce(
                         (acc, item) => acc + item.price * item.quantity,
-                        0
+                        0,
                       ) *
                         order.discount) /
                       100
@@ -1779,7 +1820,7 @@ const instructionsPart = order.instructions
                 // Calculate total amount
                 const total = order.items.reduce(
                   (acc, item) => acc + item.price * item.quantity,
-                  0
+                  0,
                 );
                 const totalAmount = total + delivery - discountAmount;
 
@@ -1833,12 +1874,12 @@ const instructionsPart = order.instructions
                         <p style={{ fontWeight: 700 }}>{order.customerPhone}</p>
                       )}
                     </h4>
-                      {/* Add this section to display instructions */}
-{order.instructions && (
-  <div className="kot-instructions">
-    <strong>Instructions:</strong> {order.instructions}
-  </div>
-)}
+                    {/* Add this section to display instructions */}
+                    {order.instructions && (
+                      <div className="kot-instructions">
+                        <strong>Instructions:</strong> {order.instructions}
+                      </div>
+                    )}
                     <hr />
                     <ul>
                       {order.items.map((item, i) => (
@@ -1874,7 +1915,14 @@ const instructionsPart = order.instructions
                           justifyContent: "space-between",
                         }}
                       >
-                        <span>Discount ({discountPercentage}%):</span>
+                        <span>
+                          Discount 
+                          {manualDiscount > 0
+                            ? ` `
+                            : `(${discountPercentage}%)`}
+                          :
+                        </span>
+
                         <span>-₹{discountAmount.toFixed(2)}</span>
                       </div>
                     )}
@@ -1883,8 +1931,16 @@ const instructionsPart = order.instructions
                       <strong>Total </strong>
                       <strong>₹{totalAmount.toFixed(2)}</strong>
                     </div>
-                      {order.pendingAmount > 0 && (
-                      <p style={{ textAlign: "center", fontWeight: "bold", color: "red" }}>Pending Amount: {order.pendingAmount}</p>
+                    {order.pendingAmount > 0 && (
+                      <p
+                        style={{
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          color: "red",
+                        }}
+                      >
+                        Pending Amount: {order.pendingAmount}
+                      </p>
                     )}
                     <div className="kot-entry-actions">
                       <button
@@ -1975,13 +2031,13 @@ const instructionsPart = order.instructions
                       (v) =>
                         v.size === variety.size &&
                         v.price === variety.price &&
-                        v.productId === currentProduct.id
+                        v.productId === currentProduct.id,
                     )}
                     onChange={(e) =>
                       handleVarietyChange(
                         variety,
                         e.target.checked,
-                        currentProduct.id
+                        currentProduct.id,
                       )
                     }
                   />
@@ -1991,7 +2047,7 @@ const instructionsPart = order.instructions
                 </label>
 
                 {selectedVariety.some(
-                  (v) => v.size === variety.size && v.price === variety.price
+                  (v) => v.size === variety.size && v.price === variety.price,
                 ) && (
                   <div className="quantity-buttons">
                     <button
@@ -1999,7 +2055,7 @@ const instructionsPart = order.instructions
                         handleVarietyQuantityChange(
                           variety,
                           -1,
-                          currentProduct.id
+                          currentProduct.id,
                         )
                       }
                       disabled={variety.quantity <= 1}
@@ -2012,14 +2068,15 @@ const instructionsPart = order.instructions
                       value={
                         selectedVariety.find(
                           (v) =>
-                            v.size === variety.size && v.price === variety.price
+                            v.size === variety.size &&
+                            v.price === variety.price,
                         )?.quantity || 1
                       }
                       onChange={(e) => {
                         const quantity = parseInt(e.target.value, 10);
                         handleVarietyQuantityChange(
                           variety,
-                          quantity - variety.quantity
+                          quantity - variety.quantity,
                         );
                       }}
                     />
@@ -2028,7 +2085,7 @@ const instructionsPart = order.instructions
                         handleVarietyQuantityChange(
                           variety,
                           1,
-                          currentProduct.id
+                          currentProduct.id,
                         )
                       }
                     >
@@ -2060,14 +2117,13 @@ const instructionsPart = order.instructions
               const eligibleSizes =
                 BOGO_ELIGIBLE_PRODUCTS[bogoPaidProduct.name] || [];
 
-                 // Get correct free size based on rule
-        const freeSize = getFreePizzaSize(bogoPaidProduct.size);
+              // Get correct free size based on rule
+              const freeSize = getFreePizzaSize(bogoPaidProduct.size);
               // Get all free options that match the paid pizza's size
               const freeOptions = Object.entries(BOGO_ELIGIBLE_PRODUCTS)
-                .filter(([pizzaName, sizes]) =>
-                  sizes.includes(freeSize)
-                )
-                .map(([pizzaName]) => pizzaName);
+                .filter(([pizzaName, sizes]) => sizes.includes(freeSize))
+                .map(([pizzaName]) => pizzaName)
+                .slice(0, 5);
 
               return freeOptions.length ? (
                 <ul>
@@ -2077,7 +2133,7 @@ const instructionsPart = order.instructions
                         onClick={() => {
                           // Find the free product in available products
                           const freeProd = selectedProducts.find(
-                            (p) => p.name === name
+                            (p) => p.name === name,
                           );
 
                           if (!freeProd) return;
@@ -2095,7 +2151,7 @@ const instructionsPart = order.instructions
                             },
                           ]);
                           setBogoDone((prev) =>
-                            new Set(prev).add(bogoPaidProduct.name)
+                            new Set(prev).add(bogoPaidProduct.name),
                           );
                           setBogoPickerOpen(false);
                           setBogoPaidProduct(null);
@@ -2209,34 +2265,62 @@ const instructionsPart = order.instructions
                   disabled={isSaving}
                 />
 
-                {/* Discount Percentage Dropdown */}
-                <select
-                  id="discountPercentage"
-                  value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
-                  disabled={isSaving}
-                  style={{
-                    padding: "0.75rem",
-                    border: "1px solid #ddd",
-                    borderRadius: "8px",
-                    fontSize: "1rem",
-                  }}
+                <div
+                  style={{ display: "flex", gap: "10px", margin: ".5rem 0" }}
                 >
-                  <option value="">No Discount</option>
-                  <option value="5">5%</option>
-                  <option value="10">10%</option>
-                  <option value="15">15%</option>
-                  <option value="20">20%</option>
-                  <option value="25">25%</option>
-                  <option value="30">30%</option>
-                  <option value="35">35%</option>
-                  <option value="40">40%</option>
-                  <option value="45">45%</option>
-                  <option value="50">50%</option>
-                </select>
+                  {/* Percentage Discount */}
+                  <select
+                    value={discount}
+                    onChange={(e) => {
+                      setDiscount(e.target.value);
+                      setDiscountAmountManual(""); // clear manual discount
+                    }}
+                    disabled={isSaving || discountAmountManual !== ""}
+                    style={{
+                      padding: "0.75rem",
+                      border: "2px solid black",
+                      borderRadius: "8px",
+                      fontSize: "1rem",
+                      margin: ".5rem 0",
+                      flex: 1,
+                    }}
+                  >
+                    <option value="">Discount %</option>
+                    <option value="5">5%</option>
+                    <option value="10">10%</option>
+                    <option value="15">15%</option>
+                    <option value="20">20%</option>
+                    <option value="25">25%</option>
+                    <option value="30">30%</option>
+                    <option value="40">40%</option>
+                    <option value="50">50%</option>
+                  </select>
+
+                  {/* Manual Discount */}
+                  <input
+                    type="text"
+                    placeholder="Discount ₹"
+                    value={discountAmountManual}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d*\.?\d*$/.test(val)) {
+                        setDiscountAmountManual(val);
+                        setDiscount(""); // clear % discount
+                      }
+                    }}
+                    disabled={isSaving || discount !== ""}
+                    style={{
+                      padding: "0.75rem",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      fontSize: "1rem",
+                      flex: 1,
+                      border: "2px solid black",
+                    }}
+                  />
+                </div>
               </div>
               <div className="form-group">
-                <label htmlFor="instructions">Instructions (for kitchen)</label>
                 <textarea
                   id="instructions"
                   placeholder="Special instructions for kitchen..."
@@ -2247,7 +2331,7 @@ const instructionsPart = order.instructions
                   style={{
                     width: "100%",
                     padding: "0.75rem",
-                    border: "1px solid #ddd",
+                    border: "2px solid black",
                     borderRadius: "8px",
                     fontSize: "1rem",
                     resize: "vertical",
@@ -2256,28 +2340,12 @@ const instructionsPart = order.instructions
                 />
               </div>
 
-                            {/* NEW: Pending amount (auto-filled from khatabook) */}
-<div className="form-group">
-  <label>Pending Amount (from khatabook)</label>
-  <input
-    type="text"
-    value={pendingAmount}
-    onChange={(e) => {
-      setPendingAmount(e.target.value);
-      setAutoFilledPending(false); // user changed it
-    }}
-    placeholder="0"
-  />
-  {autoFilledPending && (
-    <small style={{ color: "#666" }}>
-      Auto-filled from khatabook — you can edit if needed.
-    </small>
-  )}
-</div>
-              {/* Payment Status Dropdown */}
+    {/* Payment Status Dropdown */}
               <div className="form-group">
-                <label htmlFor="paymentStatus">Payment Status *</label>
                 <select
+                 style={{
+                  border: "2px solid black",
+                }}
                   id="paymentStatus"
                   value={paymentStatus}
                   onChange={(e) => setPaymentStatus(e.target.value)}
@@ -2287,6 +2355,27 @@ const instructionsPart = order.instructions
                   <option value="unpaid">Unpaid</option>
                   <option value="paid">Paid</option>
                 </select>
+              </div>
+              {/* NEW: Pending amount (auto-filled from khatabook) */}
+              <div className="form-group">
+                <label>Pending Amount (from khatabook)</label>
+                <input
+                style={{
+                  border: "2px solid black",
+                }}
+                  type="text"
+                  value={pendingAmount}
+                  onChange={(e) => {
+                    setPendingAmount(e.target.value);
+                    setAutoFilledPending(false); // user changed it
+                  }}
+                  placeholder="0"
+                />
+                {autoFilledPending && (
+                  <small style={{ color: "#666" }}>
+                    Auto-filled from khatabook — you can edit if needed.
+                  </small>
+                )}
               </div>
               {/* <div className="form-group">
                 <label htmlFor="paymentMethod">Payment Method *</label>
@@ -2330,6 +2419,7 @@ const instructionsPart = order.instructions
                   </div>
                 </div>
               )}
+               </div>
               <div className="modal-buttons">
                 <button
                   onClick={() => {
@@ -2346,7 +2436,7 @@ const instructionsPart = order.instructions
                 <button onClick={handleCustomerSubmit} disabled={isSaving}>
                   {isSaving ? "Processing..." : "Save & Print KOT"}
                 </button>
-              </div>
+             
             </div>
           </div>
         </div>
